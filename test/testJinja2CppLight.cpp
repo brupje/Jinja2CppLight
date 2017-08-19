@@ -16,32 +16,32 @@ using namespace std;
 using namespace Jinja2CppLight;
 
 TEST( testJinja2CppLight, basicsubstitution ) {
-    string source = R"DELIM(
+    wstring source = LR"DELIM(
         This is my {{avalue}} template.  It's {{secondvalue}}...
         Today's weather is {{weather}}.
     )DELIM";
 
     Template mytemplate( source );
-    mytemplate.setValue( "avalue", 3 );
-    mytemplate.setValue( "secondvalue", 12.123f );
-    mytemplate.setValue( "weather", "rain" );
-    string result = mytemplate.render();
-    cout << result << endl;
-    string expectedResult = R"DELIM(
+    mytemplate.setValue( L"avalue", 3 );
+    mytemplate.setValue( L"secondvalue", 12.123f );
+    mytemplate.setValue( L"weather", L"rain" );
+    wstring result = mytemplate.render();
+    wcout << result << endl;
+    wstring expectedResult = LR"DELIM(
         This is my 3 template.  It's 12.123...
         Today's weather is rain.
     )DELIM";
     EXPECT_EQ( expectedResult, result );
 }
 TEST( testSpeedTemplates, namemissing ) {
-    string source = R"DELIM(
+    wstring source = LR"DELIM(
         This is my {{avalue}} template.
     )DELIM";
 
     Template mytemplate( source );
     bool threw = false;
     try {
-        string result = mytemplate.render();
+        wstring result = mytemplate.render();
     } catch( render_error &e ) {
         EXPECT_EQ( string("name avalue not defined"), e.what() );
         threw = true;
@@ -49,17 +49,17 @@ TEST( testSpeedTemplates, namemissing ) {
     EXPECT_EQ( true, threw );
 }
 TEST( testSpeedTemplates, loop ) {
-    string source = R"DELIM(
+    wstring source = LR"DELIM(
         {% for i in range(its) %}
             a[{{i}}] = image[{{i}}];
         {% endfor %}
     )DELIM";
 
     Template mytemplate( source );
-    mytemplate.setValue( "its", 3 );
-    string result = mytemplate.render();
-    cout << result << endl;
-    string expectedResult = R"DELIM(
+    mytemplate.setValue( L"its", 3 );
+    wstring result = mytemplate.render();
+    wcout << result << endl;
+    wstring expectedResult = LR"DELIM(
         
             a[0] = image[0];
         
@@ -72,17 +72,17 @@ TEST( testSpeedTemplates, loop ) {
 }
 
 TEST( testSpeedTemplates, nestedloop ) {
-    string source = R"DELIM(
+    wstring source = LR"DELIM(
 {% for i in range(its) %}a[{{i}}] = image[{{i}}];
 {% for j in range(2) %}b[{{j}}] = image[{{j}}];
 {% endfor %}{% endfor %}
 )DELIM";
 
     Template mytemplate( source );
-    mytemplate.setValue( "its", 3 );
-    string result = mytemplate.render();
-    cout << "[" << result << "]" << endl;
-    string expectedResult = R"DELIM(
+    mytemplate.setValue( L"its", 3 );
+    wstring result = mytemplate.render();
+    wcout << L"[" << result << L"]" << endl;
+    wstring expectedResult = LR"DELIM(
 a[0] = image[0];
 b[0] = image[0];
 b[1] = image[1];
@@ -98,94 +98,94 @@ b[1] = image[1];
 }
 
 TEST(testSpeedTemplates, ifTrueTest) {
-    const std::string source = "abc{% if True %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if True %}def{% endif %}ghi";
     Template mytemplate( source );
-    const string result = mytemplate.render();
-    std::cout << "[" << result << "]" << endl;
-    const std::string expectedResult = "abcdefghi";
+    const wstring result = mytemplate.render();
+    std::wcout << L"[" << result << L"]" << endl;
+    const std::wstring expectedResult = L"abcdefghi";
 
     EXPECT_EQ(expectedResult, result);
 }
 
 TEST(testSpeedTemplates, ifFalseTest) {
-    const std::string source = "abc{% if False %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if False %}def{% endif %}ghi";
     Template mytemplate(source);
-    const string result = mytemplate.render();
-    std::cout << "[" << result << "]" << endl;
-    const std::string expectedResult = "abcghi";
+    const wstring result = mytemplate.render();
+    std::wcout << "[" << result << "]" << endl;
+    const std::wstring expectedResult = L"abcghi";
 
     EXPECT_EQ(expectedResult, result);
 }
 
 TEST(testSpeedTemplates, ifNotTrueTest) {
-    const std::string source = "abc{% if not True %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if not True %}def{% endif %}ghi";
     Template mytemplate(source);
-    const string result = mytemplate.render();
-    std::cout << "[" << result << "]" << endl;
-    const std::string expectedResult = "abcghi";
+    const wstring result = mytemplate.render();
+    std::wcout << "[" << result << "]" << endl;
+    const std::wstring expectedResult = L"abcghi";
 
     EXPECT_EQ(expectedResult, result);
 }
 
 TEST(testSpeedTemplates, ifNotFalseTest) {
-    const std::string source = "abc{% if not False %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if not False %}def{% endif %}ghi";
     Template mytemplate(source);
-    const string result = mytemplate.render();
-    std::cout << "[" << result << "]" << endl;
-    const std::string expectedResult = "abcdefghi";
+    const wstring result = mytemplate.render();
+    std::wcout << L"[" << result << L"]" << endl;
+    const std::wstring expectedResult = L"abcdefghi";
 
     EXPECT_EQ(expectedResult, result);
 }
 
 TEST(testSpeedTemplates, ifVariableExitsTest) {
-    const std::string source = "abc{% if its %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if its %}def{% endif %}ghi";
     
     {
         Template mytemplate(source);
-        const std::string expectedResultNoVariable = "abcghi";
-        const std::string result = mytemplate.render();
+        const std::wstring expectedResultNoVariable = L"abcghi";
+        const std::wstring result = mytemplate.render();
         EXPECT_EQ(expectedResultNoVariable, result);
     }
 
     {
         Template mytemplate(source);
-        mytemplate.setValue("its", 3);
-        const std::string result = mytemplate.render();
-        std::cout << "[" << result << "]" << endl;
-        const std::string expectedResult = "abcdefghi";
+        mytemplate.setValue(L"its", 3);
+        const std::wstring result = mytemplate.render();
+        std::wcout << L"[" << result << L"]" << endl;
+        const std::wstring expectedResult = L"abcdefghi";
         EXPECT_EQ(expectedResult, result);
     }
 }
 
 TEST(testSpeedTemplates, ifVariableDoesntExitTest) {
-    const std::string source = "abc{% if not its %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if not its %}def{% endif %}ghi";
     
     {
         Template mytemplate(source);
-        const std::string expectedResultNoVariable = "abcdefghi";
-        const std::string result = mytemplate.render();
+        const std::wstring expectedResultNoVariable = L"abcdefghi";
+        const std::wstring result = mytemplate.render();
         EXPECT_EQ(expectedResultNoVariable, result);
     }
 
     {
         Template mytemplate(source);
-        mytemplate.setValue("its", 3);
-        const std::string result = mytemplate.render();
-        std::cout << "[" << result << "]" << endl;
-        const std::string expectedResult = "abcghi";
+        mytemplate.setValue(L"its", 3);
+        const std::wstring result = mytemplate.render();
+        std::wcout << L"[" << result << L"]" << endl;
+        const std::wstring expectedResult = L"abcghi";
         EXPECT_EQ(expectedResult, result);
     }
 }
 
 TEST(testSpeedTemplates, ifUnexpectedExpression) {
-    const std::string source = "abc{% if its is defined %}def{% endif %}ghi";
+    const std::wstring source = L"abc{% if its is defined %}def{% endif %}ghi";
     Template myTemplate(source);
     bool threw = false;
     try {
         myTemplate.render();
     }
-    catch (const render_error &e) {
-        EXPECT_EQ(std::string("Unexpected expression after variable name: is"), e.what());
+    catch ( render_error &e) {
+        EXPECT_EQ(std::wstring(L"Unexpected expression after variable name: is"), e.get_message());
         threw = true;
     }
     EXPECT_EQ(true, threw);

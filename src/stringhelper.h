@@ -11,51 +11,51 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
-
+#include <wchar.h>
 // #include "ClConvolveDllExport.h"
 
 class IHasToString {
 public:
-    virtual std::string toString() = 0;
+    virtual std::wstring toString() = 0;
 };
 
-//std::string toString( IHasToString *val ); // { // not terribly efficient, but works...
+//std::wstring toString( IHasToString *val ); // { // not terribly efficient, but works...
 //   std::ostringstream myostringstream;
 //   myostringstream << val->toString();
 //   return myostringstream.str();
 //}
 
 template<typename T>
-std::string toString(T val ) { // not terribly efficient, but works...
-   std::ostringstream myostringstream;
+std::wstring toString(T val ) { // not terribly efficient, but works...
+   std::wostringstream myostringstream;
    myostringstream << val;
    return myostringstream.str();
 }
 
-std::vector<std::string> split(const std::string &str, const std::string &separator = " " );
-std::string trim( const std::string &target );
+std::vector<std::wstring> split(const std::wstring &str, const std::wstring &separator = L" " );
+std::wstring trim( const std::wstring &target );
 
-inline float atof( std::string stringvalue ) {
-   return (float)std::atof(stringvalue.c_str());
+inline float atof( std::wstring stringvalue ) {
+   return (float)std::wcstof(stringvalue.c_str(),nullptr);
 }
-inline int atoi( std::string stringvalue ) {
-   return std::atoi(stringvalue.c_str());
+inline int atoi( std::wstring stringvalue ) {
+   return std::stoi(stringvalue.c_str());
 }
 
 // returns empty string if off the end of the number of available tokens
-inline std::string getToken( std::string targetstring, int tokenIndexFromZero, std::string separator = " " ) {
-   std::vector<std::string> splitstring = split( targetstring, separator );
+inline std::wstring getToken( std::wstring targetstring, int tokenIndexFromZero, std::wstring separator = L" " ) {
+   std::vector<std::wstring> splitstring = split( targetstring, separator );
    if( tokenIndexFromZero < (int)splitstring.size() ) {
       return splitstring[tokenIndexFromZero];
    } else {
-      return "";
+      return L"";
    }
 }
 
-std::string replace( std::string targetString, std::string oldValue, std::string newValue );
-std::string replaceGlobal( std::string targetString, std::string oldValue, std::string newValue );
+std::wstring replace( std::wstring targetString, std::wstring oldValue, std::wstring newValue );
+std::wstring replaceGlobal( std::wstring targetString, std::wstring oldValue, std::wstring newValue );
 
-std::string toLower(std::string in );
+std::wstring toLower(std::wstring in );
 
-void strcpy_safe( char *destination, char const*source, int maxLength );
+void strcpy_safe( wchar_t *destination, wchar_t const*source, int maxLength );
 

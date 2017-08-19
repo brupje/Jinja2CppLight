@@ -1,7 +1,7 @@
 // Copyright Hugh Perkins 2015 hughperkins at gmail
 //
-// This Source Code Form is subject to the terms of the Mozilla Public License, 
-// v. 2.0. If a copy of the MPL was not distributed with this file, You can 
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 // the intent here is to create a templates library that:
@@ -18,23 +18,30 @@
 #include <vector>
 #include <stdexcept>
 #include <sstream>
+#include <locale>
 
 #define VIRTUAL virtual
 #define STATIC static
 
 namespace Jinja2CppLight {
 
+
+
 class render_error : public std::runtime_error {
 public:
-    render_error( const std::string &what ) :
-        std::runtime_error( what ) {
-    }
+    render_error(const std::wstring &msg ) : runtime_error("Error!"), message(msg) {};
+    ~render_error() throw(){};
+
+    std::wstring get_message() { return message; }
+
+private:
+    std::wstring message;
 };
 
 class Value {
 public:
     virtual ~Value() {}
-    virtual std::string render() = 0;
+    virtual std::wstring render() = 0;
     virtual bool isTrue() const = 0;
 };
 class IntValue : public Value {
@@ -43,7 +50,7 @@ public:
     IntValue( int value ) :
         value( value ) {
     }
-    virtual std::string render() {
+    virtual std::wstring render() {
         return toString( value );
     }
     bool isTrue() const {
@@ -56,7 +63,7 @@ public:
     FloatValue( float value ) :
         value( value ) {
     }
-    virtual std::string render() {
+    virtual std::wstring render() {
         return toString( value );
     }
     bool isTrue() const {
@@ -65,11 +72,11 @@ public:
 };
 class StringValue : public Value {
 public:
-    std::string value;
-    StringValue( std::string value ) :
+    std::wstring value;
+    StringValue( std::wstring value ) :
         value( value ) {
     }
-    virtual std::string render() {
+    virtual std::wstring render() {
         return value;
     }
     bool isTrue() const {
@@ -82,10 +89,10 @@ class ControlSection;
 
 class Template {
 public:
-    std::string sourceCode;
+    std::wstring sourceCode;
 
-    std::map< std::string, Value * > valueByName;
-//    std::vector< std::string > varNameStack;
+    std::map< std::wstring, Value * > valueByName;
+//    std::vector< std::wstring > varNameStack;
     Root *root;
 
     // [[[cog
@@ -93,16 +100,16 @@ public:
     // cog_addheaders.add(classname='Template')
     // ]]]
     // generated, using cog:
-    Template( std::string sourceCode );
-    STATIC bool isNumber( std::string astring, int *p_value );
+    Template( std::wstring sourceCode );
+    STATIC bool isNumber( std::wstring astring, int *p_value );
     VIRTUAL ~Template();
-    Template &setValue( std::string name, int value );
-    Template &setValue( std::string name, float value );
-    Template &setValue( std::string name, std::string value );
-    std::string render();
+    Template &setValue( std::wstring name, int value );
+    Template &setValue( std::wstring name, float value );
+    Template &setValue( std::wstring name, std::wstring value );
+    std::wstring render();
     void print(ControlSection *section);
     int eatSection( int pos, ControlSection *controlSection );
-    STATIC std::string doSubstitutions( std::string sourceCode, std::map< std::string, Value *> valueByName );
+    STATIC std::wstring doSubstitutions( std::wstring sourceCode, std::map< std::wstring, Value *> valueByName );
 
     // [[[end]]]
 };
@@ -110,11 +117,11 @@ public:
 class ControlSection {
 public:
     std::vector< ControlSection * >sections;
-    virtual std::string render( std::map< std::string, Value *> &valueByName ) = 0;
+    virtual std::wstring render( std::map< std::wstring, Value *> &valueByName ) = 0;
     virtual void print() {
-        print("");
+        print(L"");
     }
-    virtual void print(std::string prefix) = 0;
+    virtual void print(std::wstring prefix) = 0;
 };
 
 class Container : public ControlSection {
@@ -123,13 +130,13 @@ public:
     int sourceCodePosStart;
     int sourceCodePosEnd;
 
-//    std::string render( std::map< std::string, Value *> valueByName );
-    virtual void print( std::string prefix ) {
-        std::cout << prefix << "Container ( " << sourceCodePosStart << ", " << sourceCodePosEnd << " ) {" << std::endl;
+//    std::wstring render( std::map< std::wstring, Value *> valueByName );
+    virtual void print( std::wstring prefix ) {
+        std::wcout << prefix << L"Container ( " << sourceCodePosStart << ", " << sourceCodePosEnd << " ) {" << std::endl;
         for( int i = 0; i < (int)sections.size(); i++ ) {
-            sections[i]->print( prefix + "    " );
+            sections[i]->print( prefix + L"    " );
         }
-        std::cout << prefix << "}" << std::endl;
+        std::wcout << prefix << L"}" << std::endl;
     }
 };
 
@@ -137,14 +144,14 @@ class ForSection : public ControlSection {
 public:
     int loopStart;
     int loopEnd;
-    std::string varName;
+    std::wstring varName;
     int startPos;
     int endPos;
-    std::string render( std::map< std::string, Value *> &valueByName ) {
-        std::string result = "";
+    std::wstring render( std::map< std::wstring, Value *> &valueByName ) {
+        std::wstring result = L"";
 //        bool nameExistsBefore = false;
         if( valueByName.find( varName ) != valueByName.end() ) {
-            throw render_error("variable " + varName + " already exists in this context" );
+            throw render_error(L"variable " + varName + L" already exists in this context" );
         }
         for( int i = loopStart; i < loopEnd; i++ ) {
             valueByName[varName] = new IntValue( i );
@@ -157,12 +164,12 @@ public:
         return result;
     }
     //Container *contents;
-    virtual void print( std::string prefix ) {
-        std::cout << prefix << "For ( " << varName << " in range(" << loopStart << ", " << loopEnd << " ) {" << std::endl;
+    virtual void print( std::wstring prefix ) {
+        std::wcout << prefix << L"For ( " << varName << L" in range(" << loopStart << L", " << loopEnd << L" ) {" << std::endl;
         for( int i = 0; i < (int)sections.size(); i++ ) {
-            sections[i]->print( prefix + "    " );
+            sections[i]->print( prefix + L"    " );
         }
-        std::cout << prefix << "}" << std::endl;
+        std::wcout << prefix << L"}" << std::endl;
     }
 };
 
@@ -171,21 +178,21 @@ public:
 //    vector< ControlSection * >sections;
     int startPos;
     int endPos;
-    std::string templateCode;
+    std::wstring templateCode;
 
-    std::string render();
-    virtual void print( std::string prefix ) {
-        std::cout << prefix << "Code ( " << startPos << ", " << endPos << " ) {" << std::endl;
+    std::wstring render();
+    virtual void print( std::wstring prefix ) {
+        std::wcout << prefix << L"Code ( " << startPos << L", " << endPos << L" ) {" << std::endl;
         for( int i = 0; i < (int)sections.size(); i++ ) {
-            sections[i]->print( prefix + "    " );
+            sections[i]->print( prefix + L"    " );
         }
-        std::cout << prefix << "}" << std::endl;
+        std::wcout << prefix << L"}" << std::endl;
     }
-    virtual std::string render( std::map< std::string, Value *> &valueByName ) {
-//        std::string templateString = sourceCode.substr( startPos, endPos - startPos );
-//        std::cout << "Code section, rendering [" << templateCode << "]" << std::endl;
-        std::string processed = Template::doSubstitutions( templateCode, valueByName );
-//        std::cout << "Code section, after rendering: [" << processed << "]" << std::endl;
+    virtual std::wstring render( std::map< std::wstring, Value *> &valueByName ) {
+//        std::wstring templateString = sourceCode.substr( startPos, endPos - startPos );
+//        std::wcout << "Code section, rendering [" << templateCode << "]" << std::endl;
+        std::wstring processed = Template::doSubstitutions( templateCode, valueByName );
+//        std::wcout << "Code section, after rendering: [" << processed << "]" << std::endl;
         return processed;
     }
 };
@@ -194,63 +201,62 @@ class Root : public ControlSection {
 public:
     virtual ~Root() {}
 //    std::vector< ControlSection * >sections;
-    virtual std::string render( std::map< std::string, Value *> &valueByName ) {
-        std::string resultString = "";
+    virtual std::wstring render( std::map< std::wstring, Value *> &valueByName ) {
+        std::wstring resultString = L"";
         for( int i = 0; i < (int)sections.size(); i++ ) {
             resultString += sections[i]->render( valueByName );
-        }     
-        return resultString;   
-    }
-    virtual void print(std::string prefix) {
-        std::cout << prefix << "Root {" << std::endl;
-        for( int i = 0; i < (int)sections.size(); i++ ) {
-            sections[i]->print( prefix + "    " );
         }
-        std::cout << prefix << "}" << std::endl;
-    }    
+        return resultString;
+    }
+    virtual void print(std::wstring prefix) {
+        std::wcout << prefix << L"Root {" << std::endl;
+        for( int i = 0; i < (int)sections.size(); i++ ) {
+            sections[i]->print( prefix + L"    " );
+        }
+        std::wcout << prefix << L"}" << std::endl;
+    }
 };
 
 class IfSection : public ControlSection {
 public:
-    IfSection(const std::string& expression) {
+    IfSection(const std::wstring& expression) {
         parseIfCondition(expression);
     }
 
-    std::string render(std::map< std::string, Value *> &valueByName) {
-        std::stringstream ss;
+    std::wstring render(std::map< std::wstring, Value *> &valueByName) {
+        std::wstringstream ss;
         const bool expressionValue = computeExpression(valueByName);
         if (expressionValue) {
             for (size_t j = 0; j < sections.size(); j++) {
                 ss << sections[j]->render(valueByName);
             }
         }
-        const std::string renderResult = ss.str();
+        const std::wstring renderResult = ss.str();
         return renderResult;
     }
 
-    void print(std::string prefix) {
-        std::cout << prefix << "if ( " 
-            << ((m_isNegation) ? "not " : "") 
-            << m_variableName << " ) {" << std::endl;
+    void print(std::wstring prefix) {
+        std::wcout << prefix << L"if ( "
+            << ((m_isNegation) ? L"not " : L"")
+            << m_variableName << L" ) {" << std::endl;
         if (true) {
             for (int i = 0; i < (int)sections.size(); i++) {
-                sections[i]->print(prefix + "    ");
+                sections[i]->print(prefix + L"    ");
             }
         }
-        std::cout << prefix << "}" << std::endl;
+        std::wcout << prefix << L"}" << std::endl;
     }
 
 private:
     //? It determines m_isNegation and m_variableName from @param[in] expression.
     //? @param[in] expression E.g. "if not myVariable" where myVariable is set by myTemplate.setValue( "myVariable", <any_value> );
     //?                       The result of this statement is false if myVariable is initialized.
-    void parseIfCondition(const std::string& expression);
+    void parseIfCondition(const std::wstring& expression);
 
-    bool computeExpression(const std::map< std::string, Value *> &valueByName) const;
+    bool computeExpression(const std::map< std::wstring, Value *> &valueByName) const;
 
     bool m_isNegation; ///< Tells whether is there "if not" or just "if" at the begin of expression.
-    std::string m_variableName; ///< This simple "if" implementation allows single variable condition only.
+    std::wstring m_variableName; ///< This simple "if" implementation allows single variable condition only.
 };
 
 }
-

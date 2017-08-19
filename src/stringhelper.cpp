@@ -11,8 +11,8 @@ using namespace std;
 
 #include "stringhelper.h"
 
-vector<string> split(const string &str, const string &separator ) {
-	vector<string> splitstring;
+vector<wstring> split(const wstring &str, const wstring &separator ) {
+	vector<wstring> splitstring;
 	int start = 0;
 	int npos = (int)str.find(separator);
 	while (npos != (int)str.npos ) {
@@ -24,7 +24,7 @@ vector<string> split(const string &str, const string &separator ) {
     return splitstring;
 }
 
-string trim( const string &target ) {
+wstring trim( const wstring &target ) {
 
    int origlen = (int)target.size();
    int startpos = -1;
@@ -42,24 +42,24 @@ string trim( const string &target ) {
       }      
    }
    if( startpos == -1 || endpos == -1 ) {
-      return "";
+      return L"";
    }
    return target.substr(startpos, endpos-startpos + 1 );
 }
 
-string replace( string targetString, string oldValue, string newValue ) {
+wstring replace( wstring targetString, wstring oldValue, wstring newValue ) {
     size_t pos = targetString.find( oldValue );
     if( pos == string::npos ) {
         return targetString;
     }
     return targetString.replace( pos, oldValue.length(), newValue );
 }
-string replaceGlobal( string targetString, string oldValue, string newValue ) {
+wstring replaceGlobal( wstring targetString, wstring oldValue, wstring newValue ) {
     int pos = 0;
-    string resultString = "";
+    wstring resultString = L"";
     size_t targetPos = targetString.find( oldValue, pos );
     while( targetPos != string::npos ) {
-        string preOld = targetString.substr( pos, targetPos - pos );
+        wstring preOld = targetString.substr( pos, targetPos - pos );
         resultString += preOld + newValue;
         pos = targetPos + oldValue.length();
         targetPos = targetString.find( oldValue, pos );
@@ -68,21 +68,21 @@ string replaceGlobal( string targetString, string oldValue, string newValue ) {
     return resultString;
 }
 
-std::string toLower(std::string in ) {
+std::wstring toLower(std::wstring in ) {
      int len = static_cast<int>( in.size() );
-     char *buffer = new char[len + 1];
+     wchar_t *buffer = new wchar_t[len + 1];
      for( int i = 0; i < len; i++ ) {
-        char thischar = in[i];
+        wchar_t thischar = in[i];
         thischar = tolower(thischar);
         buffer[i] = thischar;
     }
     buffer[len] = 0;
-    std::string result = std::string(buffer);
+    std::wstring result = std::wstring(buffer);
     delete[] buffer;
     return result;
 }
 
-void strcpy_safe( char *destination, char const*source, int maxLength ) {
+void strcpy_safe( wchar_t *destination, wchar_t const*source, int maxLength ) {
     int i = 0;
     for( i = 0; i < maxLength; i++ ) {
         destination[i] = source[i];

@@ -9,8 +9,8 @@ inline ::testing::AssertionResult AssertFloatsNear( const char *expr_one, const 
     if( absdiff <= absone * 0.0001f ) {
         return ::testing::AssertionSuccess();
     }
-    std::string onestr = toString(one);
-    std::string twostr = toString(two);
+    std::wstring onestr = toString(one);
+    std::wstring twostr = toString(two);
     return ::testing::AssertionFailure()
         << expr_one << " and " << expr_two << " differ: " << onestr << " vs " << twostr;
 } 

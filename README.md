@@ -19,9 +19,10 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Jinja2CppLight
-(very) lightweight version of Jinja2 for C++
+(very) lightweight version of Jinja2 for C++, Unicode version
 
 Lightweight templating engine for C++, based on Jinja2
+* supports unicode templates
 * no dependencies, everything you need to build is included
 * templates follow Jinja2 syntax
 * supports:

@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 #include <sstream>
-
+#include <wchar.h>
 #include "stringhelper.h"
 
 #include "Jinja2CppLight.h"
@@ -18,9 +18,9 @@ using namespace std;
 
 namespace
 {
-    const std::string JINJA2_TRUE = "True";
-    const std::string JINJA2_FALSE = "False";
-    const std::string JINJA2_NOT = "not";
+    const std::wstring JINJA2_TRUE = L"True";
+    const std::wstring JINJA2_FALSE = L"False";
+    const std::wstring JINJA2_NOT = L"not";
 }
 
 namespace Jinja2CppLight {
@@ -30,14 +30,14 @@ namespace Jinja2CppLight {
 #undef STATIC
 #define STATIC
 
-Template::Template( std::string sourceCode ) :
+Template::Template( std::wstring sourceCode ) :
     sourceCode( sourceCode ) {
     root = new Root();
 //    cout << "template::Template root: "  << root << endl;
 }    
 
-STATIC bool Template::isNumber( std::string astring, int *p_value ) {
-    istringstream in( astring );
+STATIC bool Template::isNumber( std::wstring astring, int *p_value ) {
+    wistringstream in( astring );
     int value;
     if( in >> value && in.eof() ) {
         *p_value = value;
@@ -46,43 +46,43 @@ STATIC bool Template::isNumber( std::string astring, int *p_value ) {
     return false;
 }
 VIRTUAL Template::~Template() {
-    for( map< string, Value * >::iterator it = valueByName.begin(); it != valueByName.end(); it++ ) {
+    for( map< wstring, Value * >::iterator it = valueByName.begin(); it != valueByName.end(); it++ ) {
         delete it->second;
     }
     valueByName.clear();
     delete root;
 }
-Template &Template::setValue( std::string name, int value ) {
+Template &Template::setValue( std::wstring name, int value ) {
     IntValue *intValue = new IntValue( value );
     valueByName[ name ] = intValue;
     return *this;
 }
-Template &Template::setValue( std::string name, float value ) {
+Template &Template::setValue( std::wstring name, float value ) {
     FloatValue *floatValue = new FloatValue( value );
     valueByName[ name ] = floatValue;
     return *this;
 }
-Template &Template::setValue( std::string name, std::string value ) {
+Template &Template::setValue( std::wstring name, std::wstring value ) {
     StringValue *floatValue = new StringValue( value );
     valueByName[ name ] = floatValue;
     return *this;
 }
-std::string Template::render() {
+std::wstring Template::render() {
 //    cout << "tempalte::render root=" << root << endl;
     size_t finalPos = eatSection(0, root );
-    cout << finalPos << " vs " << sourceCode.length() << endl;
+    wcout << finalPos << L" vs " << sourceCode.length() << endl;
     if( finalPos != sourceCode.length() ) {
-        root->print("");
-        throw render_error("some sourcecode found at end: " + sourceCode.substr( finalPos ) );
+        root->print(L"");
+        throw render_error(L"some sourcecode found at end: " + sourceCode.substr( finalPos ) );
     }
 //    cout << "tempalte::render root=" << root << endl;
-    root->print("");
+    root->print(L"");
 //    cout << "tempalte::render root=" << root << endl;
     return root->render(valueByName);
 }
 
 void Template::print(ControlSection *section) {
-    section->print("");
+    section->print(L"");
 }
 
 // pos should point to the first character that has sourcecode inside the control section controlSection
@@ -93,7 +93,7 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
 //    string updatedString = "";
     while( true ) {
 //        cout << "pos: " << pos << endl;
-        size_t controlChangeBegin = sourceCode.find( "{%", pos );
+        size_t controlChangeBegin = sourceCode.find( L"{%", pos );
 //        cout << "controlChangeBegin: " << controlChangeBegin << endl;
         if( controlChangeBegin == string::npos ) {
             //updatedString += doSubstitutions( sourceCode.substr( pos ), valueByName );
@@ -105,15 +105,15 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
             controlSection->sections.push_back( code );
             return sourceCode.length();
         } else {
-            size_t controlChangeEnd = sourceCode.find( "%}", controlChangeBegin );
+            size_t controlChangeEnd = sourceCode.find( L"%}", controlChangeBegin );
             if( controlChangeEnd == string::npos ) {
-                throw render_error( "control section unterminated: " + sourceCode.substr( controlChangeBegin, 40 ) );
+                throw render_error( L"control section unterminated: " + sourceCode.substr( controlChangeBegin, 40 ) );
             }
-            string controlChange = trim( sourceCode.substr( controlChangeBegin + 2, controlChangeEnd - controlChangeBegin - 2 ) );
-            vector<string> splitControlChange = split( controlChange, " " );
-            if( splitControlChange[0] == "endfor" || splitControlChange[0] == "endif") {
+            wstring controlChange = trim( sourceCode.substr( controlChangeBegin + 2, controlChangeEnd - controlChangeBegin - 2 ) );
+            vector<wstring> splitControlChange = split( controlChange, L" " );
+            if( splitControlChange[0] == L"endfor" || splitControlChange[0] == L"endif") {
                 if( splitControlChange.size() != 1 ) {
-                    throw render_error("control section {% " + controlChange + " unrecognized" );
+                    throw render_error(L"control section {% " + controlChange + L" unrecognized" );
                 }
                 Code *code = new Code();
                 code->startPos = pos;
@@ -133,30 +133,30 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
 //                valueByName.erase( varToRemove );
 //                varNameStack.erase( tokenStack.end() - 1, tokenStack.end() - 1 );
 //                cout << "token stack new size: " << tokenStack.size() << endl;
-            } else if( splitControlChange[0] == "for" ) {
+            } else if( splitControlChange[0] == L"for" ) {
                 Code *code = new Code();
                 code->startPos = pos;
                 code->endPos = controlChangeBegin;
                 code->templateCode = sourceCode.substr( code->startPos, code->endPos - code->startPos );
                 controlSection->sections.push_back( code );
 
-                string varname = splitControlChange[1];
-                if( splitControlChange[2] != "in" ) {
-                    throw render_error("control section {% " + controlChange + " unexpected: second word should be 'in'" );
+                wstring varname = splitControlChange[1];
+                if( splitControlChange[2] != L"in" ) {
+                    throw render_error(L"control section {% " + controlChange + L" unexpected: second word should be 'in'" );
                 }
-                string rangeString = "";
+                wstring rangeString = L"";
                 for( int i = 3; i < (int)splitControlChange.size(); i++ ) {
                     rangeString += splitControlChange[i];
                 }
-                rangeString = replaceGlobal( rangeString, " ", "" );
-                vector<string> splitRangeString = split( rangeString, "(" );
-                if( splitRangeString[0] != "range" ) {
-                    throw render_error("control section {% " + controlChange + " unexpected: third word should start with 'range'" );
+                rangeString = replaceGlobal( rangeString, L" ", L"" );
+                vector<wstring> splitRangeString = split( rangeString, L"(" );
+                if( splitRangeString[0] != L"range" ) {
+                    throw render_error(L"control section {% " + controlChange + L" unexpected: third word should start with 'range'" );
                 }
                 if( splitRangeString.size() != 2 ) {
-                    throw render_error("control section " + controlChange + " unexpected: should be in format 'range(somevar)' or 'range(somenumber)'" );
+                    throw render_error(L"control section " + controlChange + L" unexpected: should be in format 'range(somevar)' or 'range(somenumber)'" );
                 }
-                string name = split( splitRangeString[1], ")" )[0];
+                wstring name = split( splitRangeString[1],L")" )[0];
 //                cout << "for range name: " << name << endl;
                 int endValue;
                 if( isNumber( name, &endValue ) ) {
@@ -164,11 +164,11 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
                     if( valueByName.find( name ) != valueByName.end() ) {
                         IntValue *intValue = dynamic_cast< IntValue * >( valueByName[ name ] );
                         if( intValue == 0 ) {
-                            throw render_error("for loop range var " + name + " must be an int (but it's not)");
+                            throw render_error(L"for loop range var " + name + L" must be an int (but it's not)");
                         }
                         endValue = intValue->value;
                     } else {
-                        throw render_error("for loop range var " + name + " not recognized");
+                        throw render_error(L"for loop range var " + name + L" not recognized");
                     }                    
                 }
                 int beginValue = 0; // default for now...
@@ -180,26 +180,26 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
                 forSection->varName = varname;
                 pos = eatSection( controlChangeEnd + 2, forSection );
                 controlSection->sections.push_back(forSection);
-                size_t controlEndEndPos = sourceCode.find("%}", pos );
+                size_t controlEndEndPos = sourceCode.find(L"%}", pos );
                 if( controlEndEndPos == string::npos ) {
-                    throw render_error("No control end section found at: " + sourceCode.substr(pos ) );
+                    throw render_error(L"No control end section found at: " + sourceCode.substr(pos ) );
                 }
-                string controlEnd = sourceCode.substr( pos, controlEndEndPos - pos + 2 );
-                string controlEndNorm = replaceGlobal( controlEnd, " ", "" );
-                if( controlEndNorm != "{%endfor%}" ) {
-                    throw render_error("No control end section found, expected '{% endfor %}', got '" + controlEnd + "'" );
+                wstring controlEnd = sourceCode.substr( pos, controlEndEndPos - pos + 2 );
+                wstring controlEndNorm = replaceGlobal( controlEnd, L" ", L"" );
+                if( controlEndNorm != L"{%endfor%}" ) {
+                    throw render_error(L"No control end section found, expected '{% endfor %}', got '" + controlEnd + L"'" );
                 }
                 forSection->endPos = controlEndEndPos + 2;
                 pos = controlEndEndPos + 2;
 //                tokenStack.push_back("for");
 //                varNameStack.push_back(name);
-            } else if (splitControlChange[0] == "if") {
+            } else if (splitControlChange[0] == L"if") {
                 Code *code = new Code();
                 code->startPos = pos;
                 code->endPos = controlChangeBegin;
                 code->templateCode = sourceCode.substr(code->startPos, code->endPos - code->startPos);
                 controlSection->sections.push_back(code);
-                const string word = splitControlChange[1];
+                const wstring word = splitControlChange[1];
                 if (JINJA2_TRUE == word)  {
                     ;
                 } else if (JINJA2_FALSE == word) {
@@ -215,20 +215,20 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
 
                 pos = eatSection(controlChangeEnd + 2, ifSection);
                 controlSection->sections.push_back(ifSection);
-                size_t controlEndEndPos = sourceCode.find("%}", pos);
+                size_t controlEndEndPos = sourceCode.find(L"%}", pos);
                 if (controlEndEndPos == string::npos) {
-                    throw render_error("No control end of any section found at: " + sourceCode.substr(pos));
+                    throw render_error(L"No control end of any section found at: " + sourceCode.substr(pos));
                 }
-                string controlEnd = sourceCode.substr(pos, controlEndEndPos - pos + 2);
-                string controlEndNorm = replaceGlobal(controlEnd, " ", "");
-                if (controlEndNorm != "{%endif%}") {
-                    throw render_error("No control end section found, expected '{% endif %}', got '" + controlEnd + "'");
+                wstring controlEnd = sourceCode.substr(pos, controlEndEndPos - pos + 2);
+                wstring controlEndNorm = replaceGlobal(controlEnd, L" ", L"");
+                if (controlEndNorm != L"{%endif%}") {
+                    throw render_error(L"No control end section found, expected '{% endif %}', got '" + controlEnd + L"'");
                 }
                 //forSection->endPos = controlEndEndPos + 2;
                 pos = controlEndEndPos + 2;
 
             } else {
-                throw render_error("control section {% " + controlChange + " unexpected" );
+                throw render_error(L"control section {% " + controlChange + L" unexpected" );
             }
         }
     }
@@ -250,13 +250,13 @@ int Template::eatSection( int pos, ControlSection *controlSection ) {
 ////    string templatedString = doSubstitutions( sourceCode, valueByName );
 //    return updatedString;
 }
-STATIC std::string Template::doSubstitutions( std::string sourceCode, std::map< std::string, Value *> valueByName ) {
+STATIC std::wstring Template::doSubstitutions( std::wstring sourceCode, std::map< std::wstring, Value *> valueByName ) {
     int startI = 1;
-    if( sourceCode.substr(0,2) == "{{" ) {
+    if( sourceCode.substr(0,2) == L"{{" ) {
         startI = 0;
     }
-    string templatedString = "";
-    vector<string> splitSource = split( sourceCode, "{{" );
+    wstring templatedString = L"";
+    vector<wstring> splitSource = split( sourceCode, L"{{" );
     if( startI == 1 ) {
         templatedString = splitSource[0];
     }
@@ -266,11 +266,11 @@ STATIC std::string Template::doSubstitutions( std::string sourceCode, std::map< 
             continue;
         }
 
-        vector<string> thisSplit = split( splitSource[i], "}}" );
-        string name = trim( thisSplit[0] );
+        vector<wstring> thisSplit = split( splitSource[i], L"}}" );
+        wstring name = trim( thisSplit[0] );
 //        cout << "name: " << name << endl;
         if( valueByName.find( name ) == valueByName.end() ) {
-            throw render_error( "name " + name + " not defined" );
+            throw render_error( L"name " + name + L" not defined" );
         }
         Value *value = valueByName[ name ];
         templatedString += value->render();
@@ -281,31 +281,31 @@ STATIC std::string Template::doSubstitutions( std::string sourceCode, std::map< 
     return templatedString;
 }
 
-void IfSection::parseIfCondition(const std::string& expression) {
-    const std::vector<std::string> splittedExpression = split(expression, " ");
-    if (splittedExpression.empty() || splittedExpression[0] != "if") {
-        throw render_error("if statement expected.");
+void IfSection::parseIfCondition(const std::wstring& expression) {
+    const std::vector<std::wstring> splittedExpression = split(expression, L" ");
+    if (splittedExpression.empty() || splittedExpression[0] != L"if") {
+        throw render_error(L"if statement expected.");
     }
 
     std::size_t expressionIndex = 1;
     if (splittedExpression.size() < expressionIndex + 1) {
-        throw render_error("Any expression expected after if statement.");
+        throw render_error(L"Any expression expected after if statement.");
     }
     m_isNegation = (JINJA2_NOT == splittedExpression[expressionIndex]);
     expressionIndex += (m_isNegation) ? 1 : 0;
     if (splittedExpression.size() < expressionIndex + 1) {
         if (!m_isNegation)
-            throw render_error("Any expression expected after if statement.");
+            throw render_error(L"Any expression expected after if statement.");
         else
-            throw render_error("Any expression expected after if not statement.");
+            throw render_error(L"Any expression expected after if not statement.");
     }
     m_variableName = splittedExpression[expressionIndex];
     if (splittedExpression.size() > expressionIndex + 1) {
-        throw render_error(std::string("Unexpected expression after variable name: ") + splittedExpression[expressionIndex + 1]);
+        throw render_error(std::wstring(L"Unexpected expression after variable name: ") + splittedExpression[expressionIndex + 1]);
     }
 }
 
-bool IfSection::computeExpression(const std::map< std::string, Value *> &valueByName) const {
+bool IfSection::computeExpression(const std::map< std::wstring, Value *> &valueByName) const {
     if (JINJA2_TRUE == m_variableName) {
         return true ^ m_isNegation;
     }
